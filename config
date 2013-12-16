@@ -1,0 +1,10 @@
+AES	
+AES/CFB/PKCS5Padding
+HMacSHA1
+1n046wfzbekh0aoqvy8nrlctxifed10as9yxav //Key
+f5m8sj9c7lwq5tk5y7ti6ikgn //init
+6dpab5i0jo2ixz3lcb4sht3i073uf8qmn7yv6yma264gzq8wtb //hmac
+11 //sessionID
+224.1.1.1
+9999
+
