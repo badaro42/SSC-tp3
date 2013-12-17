@@ -1,4 +1,3 @@
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -7,31 +6,16 @@ import java.math.BigInteger;
 import java.net.*;
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
-import java.security.spec.X509EncodedKeySpec;
 import java.util.Arrays;
-
-
-import java.util.HashSet;
 import java.util.Scanner;
-import java.util.Set;
 
-
-//import javax.crypto.BadPaddingException;
 import javax.crypto.*;
-//import javax.crypto.IllegalBlockSizeException;
-//import javax.crypto.ShortBufferException;
-import javax.crypto.spec.DHParameterSpec;
 import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.TrustManagerFactory;
-//import javax.xml.crypto.dsig.spec.HMACParameterSpec;
-
-import java.security.cert.Certificate;
-import java.util.concurrent.TimeoutException;
 
 class ProxyClient {
 
@@ -56,7 +40,7 @@ class ProxyClient {
 
 
     MessageDigest md;
-    Set<byte[]> noncesControl;
+//    Set<byte[]> noncesControl;
 
 
     private ProxyClient(String user, String password) throws NoSuchAlgorithmException,
@@ -65,7 +49,7 @@ class ProxyClient {
 
         createSSLSocket();
 
-        noncesControl = new HashSet<byte[]>();
+//        noncesControl = new HashSet<byte[]>();
         md = MessageDigest.getInstance("SHA-1");
 
         socket = new DatagramSocket();
