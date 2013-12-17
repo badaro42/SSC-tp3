@@ -169,10 +169,12 @@ class ProxyClient {
     private static final String SSL_CONTEXT_PROVIDER = "TLS";
     private static final String SECURE_RANDOM_ALGORITHM = "SHA1PRNG";
 
-    private static final String CLIENT_CERTIFICATE_PASSWORD = "password";
-    private static final String CLIENT_CERTIFICATE_FILENAME = "clientCert";  //TODO alterar estes nomes
-    private static final String SERVER_CERTIFICATE_PASSWORD = "password";
-    private static final String SERVER_CERTIFICATE_FILENAME = "authServerCert"; //TODO alterar estes nomes
+    private static final String SERVER_KEYSTORE_NAME = "serverkeystore";
+    private static final String CLIENT_KEYSTORE_NAME = "clientkeystore";
+    private static final String GENERAL_PASSWORD = "password";
+//    private static final String CLIENT_CERTIFICATE_FILENAME = "clientCert";  //TODO alterar estes nomes
+//    private static final String SERVER_CERTIFICATE_PASSWORD = "password";
+//    private static final String SERVER_CERTIFICATE_FILENAME = "authServerCert"; //TODO alterar estes nomes
 
     private KeyManagerFactory clientKM = null;
     private TrustManagerFactory serverTrustManager = null;
@@ -185,14 +187,14 @@ class ProxyClient {
 
         try {
             ks = KeyStore.getInstance(KEYSTORE_PROVIDER);
-            input = new FileInputStream(CLIENT_CERTIFICATE_FILENAME);
-            ks.load(input, CLIENT_CERTIFICATE_PASSWORD.toCharArray());
+            input = new FileInputStream(SERVER_KEYSTORE_NAME);
+            ks.load(input, GENERAL_PASSWORD.toCharArray());
             clientKM = KeyManagerFactory.getInstance(KEY_MANAGER_FACTORY_PROVIDER);
-            clientKM.init(ks, CLIENT_CERTIFICATE_PASSWORD.toCharArray());
+            clientKM.init(ks, GENERAL_PASSWORD.toCharArray());
 
             ks = KeyStore.getInstance(KEYSTORE_PROVIDER);
-            input = new FileInputStream(SERVER_CERTIFICATE_FILENAME);
-            ks.load(input, SERVER_CERTIFICATE_PASSWORD.toCharArray());
+            input = new FileInputStream(CLIENT_KEYSTORE_NAME);
+            ks.load(input, GENERAL_PASSWORD.toCharArray());
             serverTrustManager = TrustManagerFactory.getInstance(KEY_MANAGER_FACTORY_PROVIDER);
             serverTrustManager.init(ks);
 
@@ -268,7 +270,6 @@ class ProxyClient {
         String[] elems = config.split("\\+");
 
         String cipherType = elems[0];
-//        String cipherName = elems[0];
         String hmacType = elems[1];
         byte[] keyBytes = elems[2].getBytes();//"1n046wfzbekh0aoqvy8nrlctxifed10as9yxav" );
         byte[] ivBytes = elems[3].getBytes(); //"f5m8sj9c7lwq5tk5y7ti6ikgn" );
