@@ -63,8 +63,7 @@ class ProxyClient {
             NoSuchProviderException, NoSuchPaddingException, IOException,
             InvalidKeyException, InvalidAlgorithmParameterException, InvalidKeySpecException, Exception {
 
-        getKeyFromServerCertificate();
-        getKeyFromClientKeystore();
+        createSSLSocket();
 
         noncesControl = new HashSet<byte[]>();
         md = MessageDigest.getInstance("SHA-1");
