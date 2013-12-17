@@ -134,7 +134,6 @@ public class AuthServer3 {
 
 	private void initSSL(){
 		serverSock = null;
-//		SSLSocket socket = null;
 		try
 		{
 			//load server private key
