@@ -84,10 +84,10 @@ public class AuthServer3 {
 
 
 
-	public static byte[] stringToBytes(String s) {
-		byte[] b2 = new BigInteger(s, 36).toByteArray();
-		return Arrays.copyOfRange(b2, 1, b2.length);
-	}
+//	public static byte[] stringToBytes(String s) {
+//		byte[] b2 = new BigInteger(s, 36).toByteArray();
+//		return Arrays.copyOfRange(b2, 1, b2.length);
+//	}
 
 	private void loadUsers() throws IOException{
 		File f = new File(AUTHENTICATION_FILE);
@@ -183,34 +183,26 @@ public class AuthServer3 {
 	private class Authentication implements Runnable{
 		private static final int PROT_VERSION = 2;
 
-
-		private PrintWriter out = null;
 		SSLSocket socket;
-
 		Authentication(SSLSocket socket) throws IOException {
 			this.socket = socket;
-			out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())));
-		}
-
-		private void send(byte[] msg){
-
-			out.println("Resposta do servidor ....");
-			out.flush();
-
 		}
 
 		@Override
 		public void run() {
 
 			BufferedReader in = null;
+			PrintWriter out = null;
 			try {
 				in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+				out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())));
 
 				String username = in.readLine();
 				String password = in.readLine();
 
 				if (users.get( username ).equals(password) ){
 					out.println(cipherSuiteWithKeys);
+					out.flush();
 				}
 
 

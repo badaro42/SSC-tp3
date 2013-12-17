@@ -107,6 +107,7 @@ class Streamcast3 {
 
 			SecretKeySpec keyspec = new SecretKeySpec(keyBytes, algMode);
 
+
 			cipher = Cipher.getInstance(alg, "BC");
 			hMac = Mac.getInstance(hmac, "BC");
 			Key hMacKey = new SecretKeySpec(hmacBytes, hmac);
