@@ -1,7 +1,4 @@
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
 import java.math.BigInteger;
 import java.net.*;
 import java.security.*;
@@ -73,41 +70,13 @@ class ProxyClient {
         //rs.close();
     }
 
-    private void initCipherSuite(String config, byte[] streamKey) {
-        String completeCS = new String(streamKey);
-        String[] elems = completeCS.split("\\+");
 
 
-        String[] cs = config.split(";");
-        String cipherType = cs[0].split("/")[0];
-        String cipherName = cs[0];
-        String hmacType = cs[1];
-        byte[] keyBytes = stringToBytes(elems[2]);//"1n046wfzbekh0aoqvy8nrlctxifed10as9yxav" );
-        byte[] ivBytes = stringToBytes(elems[3]); //"f5m8sj9c7lwq5tk5y7ti6ikgn" );
-        byte[] hmacBytes = stringToBytes(elems[4]); //"6dpab5i0jo2ixz3lcb4sht3i073uf8qmn7yv6yma264gzq8wtb" );
-        String provider = "BC";
 
-        try {
-            key = new SecretKeySpec(keyBytes, cipherType);
-            ivSpec = new IvParameterSpec(ivBytes);
-            hMacKey = new SecretKeySpec(hmacBytes, hmacType);
-
-            cipher = Cipher.getInstance(cipherName, provider);
-            hMac = Mac.getInstance(hmacType, provider);
-
-            cipher.init(Cipher.DECRYPT_MODE, key, ivSpec);
-            hMac.init(hMacKey);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-
-    public static byte[] stringToBytes(String s) {
-        byte[] b2 = new BigInteger(s, 36).toByteArray();
-        return Arrays.copyOfRange(b2, 1, b2.length);
-    }
+//    public static byte[] stringToBytes(String s) {
+//        byte[] b2 = new BigInteger(s, 36).toByteArray();
+//        return Arrays.copyOfRange(b2, 1, b2.length);
+//    }
 
     /**
      * Verify data integrity and returns hash length, if integrity is secured.
@@ -230,7 +199,7 @@ class ProxyClient {
             SSLContext ssl = SSLContext.getInstance(SSL_CONTEXT_PROVIDER);
             ssl.init(clientKM.getKeyManagers(), serverTrustManager.getTrustManagers(),
                     SecureRandom.getInstance(SECURE_RANDOM_ALGORITHM));
-            sslsocket = (SSLSocket) ssl.getSocketFactory().createSocket("localhost", 8889);
+            sslsocket = (SSLSocket) ssl.getSocketFactory().createSocket(AUTH_SERVER, AUTH_SERVER_PORT);
             sslsocket.startHandshake();
 
         } catch (Exception e) {
@@ -275,6 +244,51 @@ class ProxyClient {
     //TODO
     private void authenticate(String username, String password) throws Exception {
 
+        PrintWriter out;
+        BufferedReader in;
+
+        try {
+            out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(sslsocket.getOutputStream())));
+            in = new BufferedReader(new InputStreamReader(sslsocket.getInputStream()));
+
+            out.println(username);
+            out.println(password);
+
+            String ciphersuite = in.readLine();
+
+
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void initCipherSuite(String config) {
+
+        String[] elems = config.split("\\+");
+
+        String cipherType = elems[0];
+//        String cipherName = elems[0];
+        String hmacType = elems[1];
+        byte[] keyBytes = elems[2].getBytes();//"1n046wfzbekh0aoqvy8nrlctxifed10as9yxav" );
+        byte[] ivBytes = elems[3].getBytes(); //"f5m8sj9c7lwq5tk5y7ti6ikgn" );
+        byte[] hmacBytes = elems[4].getBytes(); //"6dpab5i0jo2ixz3lcb4sht3i073uf8qmn7yv6yma264gzq8wtb" );
+        String provider = "BC";
+
+        try {
+            key = new SecretKeySpec(keyBytes, cipherType);
+            ivSpec = new IvParameterSpec(ivBytes);
+            hMacKey = new SecretKeySpec(hmacBytes, hmacType);
+
+            cipher = Cipher.getInstance(cipherType, provider);
+            hMac = Mac.getInstance(hmacType, provider);
+
+            cipher.init(Cipher.DECRYPT_MODE, key, ivSpec);
+            hMac.init(hMacKey);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 
