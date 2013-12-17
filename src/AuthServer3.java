@@ -25,7 +25,8 @@ public class AuthServer3 {
 
 	private Map<String, String> users;
 
-	private byte[] cipherSuiteWithKeys;
+	private byte[] cipherSuiteWithKeysBytes;
+	private String cipherSuiteWithKeys;
 
 	private int sessionID = 1; //TODO
 
@@ -50,28 +51,28 @@ public class AuthServer3 {
 		try {
 			Scanner in = new Scanner(f);
 
-			String s = "";
+			cipherSuiteWithKeys = "";
 
 			in.nextLine();
 
-			s += in.next();	//ciphersuite
+			cipherSuiteWithKeys += in.next();	//ciphersuite
 			in.nextLine();
 
-			s += "+" + in.next();	//hmac
+			cipherSuiteWithKeys += "+" + in.next();	//hmac
 			in.nextLine();
 
-			s += "+" + in.next();	//keyBytes
+			cipherSuiteWithKeys += "+" + in.next();	//keyBytes
 			in.nextLine();
 
-			s += "+" + in.next();	//vector init bytes
+			cipherSuiteWithKeys += "+" + in.next();	//vector init bytes
 			in.nextLine();
 
-			s += "+" + in.next();	//hmac bytes
+			cipherSuiteWithKeys += "+" + in.next();	//hmac bytes
 			in.nextLine();
 
 			in.close();
 
-			cipherSuiteWithKeys = s.getBytes();
+			cipherSuiteWithKeysBytes = cipherSuiteWithKeys.getBytes();
 
 		} catch (FileNotFoundException e) {
 			System.err.println("Config file not found");
@@ -184,8 +185,10 @@ public class AuthServer3 {
 
 
 		private PrintWriter out = null;
+		SSLSocket socket;
 
 		Authentication(SSLSocket socket) throws IOException {
+			this.socket = socket;
 			out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())));
 		}
 
@@ -198,10 +201,22 @@ public class AuthServer3 {
 
 		@Override
 		public void run() {
-//			byte[] buffer = new byte[65536];
-//			DatagramPacket dgPacket = new DatagramPacket(buffer, buffer.length);
 
-			//TODO
+			BufferedReader in = null;
+			try {
+				in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+
+				String username = in.readLine();
+				String password = in.readLine();
+
+				if (users.get( username ).equals(password) ){
+					out.println(cipherSuiteWithKeys);
+				}
+
+
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 
 		}
 	}
