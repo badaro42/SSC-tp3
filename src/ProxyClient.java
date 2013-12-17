@@ -54,9 +54,6 @@ class ProxyClient {
 
     private byte[] dfKey;
 
-    private Cipher dfEnc;
-    private Cipher dfDec;
-
 
     MessageDigest md;
     Set<byte[]> noncesControl;
@@ -239,7 +236,7 @@ class ProxyClient {
     private KeyManagerFactory clientKM = null;
     private TrustManagerFactory serverTrustManager = null;
 
-    private SSLSocket sslsocket = null;
+	
     FileInputStream input = null;
     private KeyStore ks = null;
 
