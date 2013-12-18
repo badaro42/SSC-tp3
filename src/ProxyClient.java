@@ -170,7 +170,7 @@ class ProxyClient {
     private static final String SECURE_RANDOM_ALGORITHM = "SHA1PRNG";
 
     private static final String SERVER_KEYSTORE_NAME = "serverkeystore";
-    private static final String CLIENT_KEYSTORE_NAME = "clientkeystore";
+    private static final String CLIENT_KEYSTORE_NAME = "pckeystore";
     private static final String GENERAL_PASSWORD = "password";
 //    private static final String CLIENT_CERTIFICATE_FILENAME = "clientCert";  //TODO alterar estes nomes
 //    private static final String SERVER_CERTIFICATE_PASSWORD = "password";
@@ -187,13 +187,13 @@ class ProxyClient {
 
         try {
             ks = KeyStore.getInstance(KEYSTORE_PROVIDER);
-            input = new FileInputStream(SERVER_KEYSTORE_NAME);
+            input = new FileInputStream(CLIENT_KEYSTORE_NAME);
             ks.load(input, GENERAL_PASSWORD.toCharArray());
             clientKM = KeyManagerFactory.getInstance(KEY_MANAGER_FACTORY_PROVIDER);
             clientKM.init(ks, GENERAL_PASSWORD.toCharArray());
 
             ks = KeyStore.getInstance(KEYSTORE_PROVIDER);
-            input = new FileInputStream(CLIENT_KEYSTORE_NAME);
+            input = new FileInputStream(SERVER_KEYSTORE_NAME);
             ks.load(input, GENERAL_PASSWORD.toCharArray());
             serverTrustManager = TrustManagerFactory.getInstance(KEY_MANAGER_FACTORY_PROVIDER);
             serverTrustManager.init(ks);
