@@ -1,7 +1,4 @@
-import javax.crypto.Cipher;
-import javax.crypto.Mac;
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
+
 import java.io.*;
 import java.math.BigInteger;
 import java.net.DatagramPacket;
@@ -9,42 +6,24 @@ import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
 import java.security.Key;
 import java.util.Arrays;
+import java.util.Scanner;
+
+import javax.crypto.Cipher;
+import javax.crypto.Mac;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 
 class Streamcast3 {
 
 	protected static short sessionID;
-	private static short PROT_VERSION = 3;
+	private static short PROT_VERSION = 1;
 	private static short STREAM_PACKET_TYPE = 5;
-
-	private static final String CONFIG_NETWORK_FILENAME = "configNetwork";
-	private static final String CONFIG_CIPHER_SUITE_FILENAME = "configCS";
-	private static final String DEFAULT_ADDRESS = "224.1.1.1";
-	private static final int DEFAULT_PORT = 9999;
-
-	private static String address;
-	private static int port;
-
-	private static Cipher cipher;
-	private static Mac hMac;
+	private static String ADDRESS= "224.1.1.1";
+	private static int PORT = 9999;
+	private static final String CONFIG_CS_FILENAME = "configCS";
+	private static final String CONFIG_NETWORKING_FILENAME = "configNetwork";
 
 
-	private static void readConfigNetworkFile(String filename){
-		try{
-			FileReader fr = new FileReader(filename);
-			BufferedReader br = new BufferedReader(fr);
-
-			String line = br.readLine();
-			String[] add_port = line.split(" ");
-			address = add_port[0];
-			port = Integer.parseInt(add_port[1]);
-
-			br.close();
-		} catch (Exception e){
-			e.printStackTrace();
-		}
-		address = DEFAULT_ADDRESS;
-		port = DEFAULT_PORT;
-	}
 
 	private static String[] getConfig(String filename) throws IOException{
 		FileReader fr = new FileReader(filename);
@@ -52,90 +31,58 @@ class Streamcast3 {
 
 		String[] config = new String[7];
 
-		for(int i = 0; i < 7; i++)
+		for(int i = 0; i < 6; i++)
 			config[i] = br.readLine().split(" ")[0];
 
 		br.close();
 		return config;
 	}
-
-	public static byte[] stringToBytes(String s) {
-		byte[] b2 = new BigInteger(s, 36).toByteArray();
-		return Arrays.copyOfRange(b2, 1, b2.length);
-	}
-
-
-	private static void initCipherSuite(String filename){
-		FileReader fr = null;
-		try {
-			fr = new FileReader(filename);
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-			System.out.println("Config CS file not found");
-			System.exit(0);
-		}
-		BufferedReader br = new BufferedReader(fr);
-
+	private static void readNetworkingConfig(String filename){
+		File f = new File(filename);
 		try{
-			String alg = "";
-			String algMode = "";
-			boolean padding = false;
-			String hmac = "";
-			String key = "";
-			String hmacKey = "";
-			String ivKey = "";
-			try {
-				alg = br.readLine().trim();
-				algMode = br.readLine();
-				padding = ! algMode.split("/")[2].equals("NoPadding");
-				hmac = br.readLine().split(" ")[0];
-				key = br.readLine().split(" ")[0];
-				hmacKey = br.readLine().split(" ")[0];
-				if (padding)
-					ivKey = br.readLine().split(" ")[0];
-
-			} catch (IOException e) {
-				e.printStackTrace();
-				System.out.println("Error reading config CS file");
-				System.exit(0);
-			}
-
-
-			byte[] keyBytes = stringToBytes(key);
-			byte[] hmacBytes = stringToBytes(hmacKey);
-			byte[] ivBytes = stringToBytes(ivKey);
-
-			SecretKeySpec keyspec = new SecretKeySpec(keyBytes, algMode);
-
-
-			cipher = Cipher.getInstance(alg, "BC");
-			hMac = Mac.getInstance(hmac, "BC");
-			Key hMacKey = new SecretKeySpec(hmacBytes, hmac);
-			IvParameterSpec ivSpec = null;
-			if (padding){
-				ivSpec = new IvParameterSpec(ivBytes);
-				cipher.init(Cipher.ENCRYPT_MODE, keyspec, ivSpec);
-			}
-			else
-				cipher.init(Cipher.ENCRYPT_MODE, keyspec);
-
-			hMac.init(hMacKey);
-		} catch (Exception e) {
-			e.printStackTrace();
-			System.exit(0);
-		}
-
+			Scanner in = new Scanner(f);
+			ADDRESS = in.next();
+			PORT = Integer.parseInt(in.next());
+		} catch (Exception e){ }
 	}
 
 	static public void main( String []args ) throws Exception {
 		// Use: args[0] the stream. file
+		// args[1] to give the multicast group address
+		// args[2[ to give the used port
 
-		readConfigNetworkFile(CONFIG_NETWORK_FILENAME);
-		initCipherSuite(CONFIG_CIPHER_SUITE_FILENAME);
+		sessionID = 8131;
+
+		readNetworkingConfig(CONFIG_NETWORKING_FILENAME);
+		String[] confs = getConfig(CONFIG_CS_FILENAME);
+		String cipherType = confs[0];
+		String cipherMode = confs[1];
+		String provider = "BC";
+		String hmacType = confs[2];
+
+//		cipherName = "AES/CFB/PKCS5Padding";
+//		hmacType = "HMacSHA1";
+		boolean padding = ! cipherMode.split("/")[2].equals("NoPadding");
+
+		byte[] keyBytes = confs[3].getBytes(); //"1n046wfzbekh0aoqvy8nrlctxifed10a".getBytes();
+		byte[] hmacBytes = confs[4].getBytes(); //"6dpab5i0jo2ixz3lcb4sht3i073uf8qmn7yv6yma264gzq8wtb".getBytes();
+		byte[] ivBytes = null;
+		if (padding)
+			ivBytes = confs[5].getBytes(); //"f5m8sj9c7lwq5tk5".getBytes();
+
+		SecretKeySpec key = new SecretKeySpec(keyBytes, cipherType);
+		Cipher cipher = Cipher.getInstance(cipherMode, provider);
+		Mac hMac = Mac.getInstance(hmacType, provider);
+		Key hMacKey = new SecretKeySpec(hmacBytes, hmacType);
+		if (padding){
+			IvParameterSpec ivSpec = new IvParameterSpec(ivBytes);
+			cipher.init(Cipher.ENCRYPT_MODE, key, ivSpec);
+		}
+		else
+			cipher.init(Cipher.ENCRYPT_MODE, key);
 
 
-		sessionID = 8131;	//TODO random
-
+		int port = PORT;
 		int size;
 		int blockcount = 0;
 		long marktime;
@@ -147,7 +94,7 @@ class Streamcast3 {
 		// multicast, a datagram socket is ok.
 
 		DatagramSocket dgsocket = new DatagramSocket();
-		InetSocketAddress epaddr = new InetSocketAddress( address, port);
+		InetSocketAddress epaddr = new InetSocketAddress( ADDRESS, port);
 		DatagramPacket dgpacket = new DatagramPacket(buffer, buffer.length, epaddr );
 
 		long time0 = System.nanoTime(); // Iinitial ref time
@@ -172,13 +119,15 @@ class Streamcast3 {
 
 //			Cipher ------------
 
+//			cipher.init(Cipher.ENCRYPT_MODE, key, ivSpec);
 			byte[] cipherData = new byte[cipher.getOutputSize(size + hMac.getMacLength() + 4)];
 			int ctLength = cipher.update(buffer, 0, size+4, cipherData, 0);
+			hMac.init(hMacKey);
 			hMac.update(buffer, 0, size+4);
-			ctLength += cipher.doFinal(hMac.doFinal(), 0, hMac.getMacLength(), cipherData, ctLength);
+			ctLength += cipher.doFinal(hMac.doFinal(), 0, hMac.getMacLength(), cipherData, ctLength);//Final(cipherData, ctLength);
 
 //			-----------------
-//	        add Headers 
+//	        add Headers
 
 			byte[] packet = new byte[ 4 + ctLength ];
 			packet[0] = (byte) PROT_VERSION;

@@ -1,12 +1,15 @@
 package p2;
 
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLServerSocket;
-import javax.net.ssl.SSLSocket;
+import sun.security.x509.X500Name;
+
+import javax.net.ssl.*;
+import javax.security.cert.CertificateNotYetValidException;
+import javax.security.cert.X509Certificate;
 import java.io.*;
 import java.security.KeyStore;
+import java.security.Principal;
 import java.security.SecureRandom;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
@@ -16,7 +19,8 @@ public class AuthServer3 {
 	private static final String ADDRESS = "localhost";
 	private static final int PORT = 9000;
 	private static final String AUTHENTICATION_FILE = "UsersAuth";
-	private static final String CONFIG_FILE = "config";
+	private static final String CONFIG_FILE = "configCS";
+	private static final String CONFIG_NETWORKING_FILE = "configNetwork";
 	private static final int NONCE_LENGTH = 8;
 //    private static final String AUTH_CONFIG_FILE = "authConfig";
 
@@ -71,6 +75,14 @@ public class AuthServer3 {
 
 			in.close();
 
+
+			f = new File(CONFIG_NETWORKING_FILE);
+			in = new Scanner(f);
+			cipherSuiteWithKeys += "+" + in.next();	//address
+			cipherSuiteWithKeys += "+" + in.next(); //port
+			in.close();
+
+
 			cipherSuiteWithKeysBytes = cipherSuiteWithKeys.getBytes();
 
 		} catch (FileNotFoundException e) {
@@ -112,7 +124,7 @@ public class AuthServer3 {
 	private static final String SERVER_KEY_STORE = "serverks";
 	private static final String SERVER_KEY_STORE_PASSWORD = "password";
 	private static final String SERVER_KEY_MANAGER = "SunX509";
-//	private static final String SERVER_TRUST_STORE = "servertruststore";
+	private static final String SERVER_TRUST_STORE = "servertruststore";
 	private SSLServerSocket serverSock;
 
 
@@ -132,6 +144,7 @@ public class AuthServer3 {
 		}
 	}
 
+
 	private void initSSL(){
 		serverSock = null;
 		try
@@ -144,16 +157,16 @@ public class AuthServer3 {
 			//System.out.println(serverKeyManager.getProvider());
 			serverKeyManager.init(serverKeys,SERVER_CERTIFICATE_PASSWORD.toCharArray());
 			//load client public key
-//			KeyStore clientPub = KeyStore.getInstance("JKS");
-//			clientPub.load(new FileInputStream(SERVER_TRUST_STORE), SERVER_KEY_STORE_PASSWORD.toCharArray());
-//			TrustManagerFactory trustManager = TrustManagerFactory.getInstance("SunX509");
-//			trustManager.init(clientPub);
+			KeyStore clientPub = KeyStore.getInstance("JKS");
+			clientPub.load(new FileInputStream(SERVER_TRUST_STORE), SERVER_KEY_STORE_PASSWORD.toCharArray());
+			TrustManagerFactory trustManager = TrustManagerFactory.getInstance("SunX509");
+			trustManager.init(clientPub);
 			//use keys to create SSLSoket
 			SSLContext ssl = SSLContext.getInstance("TLS");
-			ssl.init(serverKeyManager.getKeyManagers(), null,
+			ssl.init(serverKeyManager.getKeyManagers(), trustManager.getTrustManagers(),
 					SecureRandom.getInstance("SHA1PRNG"));
 			serverSock = (SSLServerSocket)ssl.getServerSocketFactory().createServerSocket(PORT);
-			serverSock.setNeedClientAuth(false);
+			serverSock.setNeedClientAuth(true);
 //			socket = (SSLSocket)serverSock.accept();
 			//send data
 //			out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())));
@@ -185,7 +198,35 @@ public class AuthServer3 {
 		SSLSocket socket;
 		Authentication(SSLSocket socket) throws IOException {
 			this.socket = socket;
+			verifyCertificates();
 		}
+
+		//verifica o certificado do servidor se o CN do host corresponde ao CN do certificado.
+		//verifica tambem se ainda se encontra válido à data da conexao
+		private void verifyCertificates(){
+			try {
+				SSLSession session = socket.getSession();
+				Principal server = session.getPeerPrincipal();
+
+				String[] rawInfo = server.toString().split(", ");
+				String[] cnInfo = rawInfo[0].split("=");
+
+				X509Certificate[] certs = session.getPeerCertificateChain();
+				String domain = certs[0].getSubjectDN().getName();
+				certs[0].checkValidity(new Date());
+				X500Name name = new X500Name(domain);
+
+				if (!cnInfo[1].equals(name.getCommonName()))
+					System.err.println("Aviso! Esperava " + cnInfo[1] + " mas encontrei " + name.getCommonName() + "!!");
+
+			} catch (CertificateNotYetValidException e) {
+				System.err.println("The certificate has expired");
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+
+
 
 		@Override
 		public void run() {

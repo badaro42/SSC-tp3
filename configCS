@@ -1,6 +1,6 @@
 AES
 AES/CFB/PKCS5Padding
 HMacSHA1
-1n046wfzbekh0aoqvy8nrlctxifed10as9yxav 				//Key
+1n046wfzbekh0aoqvy8nrlctxifed10a 				//Key
 6dpab5i0jo2ixz3lcb4sht3i073uf8qmn7yv6yma264gzq8wtb 	//hmac
-f5m8sj9c7lwq5tk5y7ti6ikgn 							//init
+f5m8sj9c7lwq5tk5 							//iv
