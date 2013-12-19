@@ -1,17 +1,9 @@
-import javax.crypto.Cipher;
-import javax.crypto.KeyAgreement;
-import javax.crypto.spec.DHParameterSpec;
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
+package p1;
+
 import java.io.*;
-import java.math.BigInteger;
-import java.net.*;
 import java.security.*;
-import java.security.cert.Certificate;
-import java.security.spec.X509EncodedKeySpec;
 import java.util.*;
 
-import java.security.*;
 import javax.net.ssl.*;
 
 public class AuthServer3 {

@@ -1,5 +1,5 @@
 ﻿java AuthServer2
 
-java ProxyClient user password
+java p1.ProxyClient user password
 
 java Streamcast /tmp/streaming.dat

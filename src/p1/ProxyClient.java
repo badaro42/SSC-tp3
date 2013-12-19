@@ -1,9 +1,10 @@
+package p1;
+
 import java.io.*;
 import java.math.BigInteger;
 import java.net.*;
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
-import java.util.Arrays;
 import java.util.Scanner;
 
 import javax.crypto.*;
@@ -295,7 +296,7 @@ class ProxyClient {
 
     static public void main(String[] args) throws Exception {
         if (args.length != 2) {
-            System.out.println("Use: ProxyClient user password");
+            System.out.println("Use: p1.ProxyClient user password");
         }
 
         System.out.println("Authenticating...");
