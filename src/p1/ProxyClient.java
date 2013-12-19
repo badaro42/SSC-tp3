@@ -17,7 +17,7 @@ import javax.net.ssl.TrustManagerFactory;
 
 class ProxyClient {
 
-    private static final String AUTH_SERVER = "224.1.1.0";
+    private static final String AUTH_SERVER = "localhost";
     private static final int AUTH_SERVER_PORT = 9000;
 
     private static final byte PROT_VERSION = 0x1;
@@ -201,7 +201,6 @@ class ProxyClient {
             ssl.init(null, serverTrustManager.getTrustManagers(),
                     SecureRandom.getInstance(SECURE_RANDOM_ALGORITHM));
             sslsocket = (SSLSocket) ssl.getSocketFactory().createSocket(AUTH_SERVER, AUTH_SERVER_PORT);
-            sslsocket.startHandshake();
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -244,21 +243,25 @@ class ProxyClient {
 
     //TODO
     private void authenticate(String username, String password) throws Exception {
-
+		sslsocket.startHandshake();
         PrintWriter out;
         BufferedReader in;
 
         try {
-            out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(sslsocket.getOutputStream())));
+
+			out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(sslsocket.getOutputStream())));
             in = new BufferedReader(new InputStreamReader(sslsocket.getInputStream()));
 
+			System.out.println(sslsocket.isConnected());
+
             out.println(username);
+			out.flush();
             out.println(password);
+			out.flush();
 
             String ciphersuite = in.readLine();
 
-
-
+			//TODO usar a ciphersuite
         } catch (IOException e) {
             e.printStackTrace();
         }

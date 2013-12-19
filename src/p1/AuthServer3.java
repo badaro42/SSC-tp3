@@ -8,7 +8,7 @@ import javax.net.ssl.*;
 
 public class AuthServer3 {
 
-	private static final String ADDRESS = "224.1.1.0";
+	private static final String ADDRESS = "localhost";
 	private static final int PORT = 9000;
 	private static final String AUTHENTICATION_FILE = "UsersAuth";
 	private static final String CONFIG_FILE = "config";
@@ -33,6 +33,8 @@ public class AuthServer3 {
 		users = new HashMap<String, String>();
 
 		loadUsers();
+
+		initSSL();
 
 		readConfig(CONFIG_FILE);
 
@@ -102,10 +104,10 @@ public class AuthServer3 {
 
 
 
-	private static final String SERVER_KEY_STORE = "serverkeystore";
-	private static final String SERVER_KEY_STORE_PASSWORD = "server";
+	private static final String SERVER_KEY_STORE = "serverks";
+	private static final String SERVER_KEY_STORE_PASSWORD = "password";
 	private static final String SERVER_KEY_MANAGER = "SunX509";
-	private static final String SERVER_TRUST_STORE = "servertruststore";
+//	private static final String SERVER_TRUST_STORE = "servertruststore";
 	private SSLServerSocket serverSock;
 
 
@@ -186,8 +188,10 @@ public class AuthServer3 {
 			BufferedReader in = null;
 			PrintWriter out = null;
 			try {
-				in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-				out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())));
+				in = new BufferedReader(new InputStreamReader(this.socket.getInputStream()));
+				out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(this.socket.getOutputStream())));
+
+				System.out.println(this.socket.isConnected());
 
 				String username = in.readLine();
 				String password = in.readLine();
