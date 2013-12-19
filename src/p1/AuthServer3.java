@@ -137,16 +137,16 @@ public class AuthServer3 {
 			//System.out.println(serverKeyManager.getProvider());
 			serverKeyManager.init(serverKeys,SERVER_CERTIFICATE_PASSWORD.toCharArray());
 			//load client public key
-			KeyStore clientPub = KeyStore.getInstance("JKS");
-			clientPub.load(new FileInputStream(SERVER_TRUST_STORE), SERVER_KEY_STORE_PASSWORD.toCharArray());
-			TrustManagerFactory trustManager = TrustManagerFactory.getInstance("SunX509");
-			trustManager.init(clientPub);
+//			KeyStore clientPub = KeyStore.getInstance("JKS");
+//			clientPub.load(new FileInputStream(SERVER_TRUST_STORE), SERVER_KEY_STORE_PASSWORD.toCharArray());
+//			TrustManagerFactory trustManager = TrustManagerFactory.getInstance("SunX509");
+//			trustManager.init(clientPub);
 			//use keys to create SSLSoket
 			SSLContext ssl = SSLContext.getInstance("TLS");
-			ssl.init(serverKeyManager.getKeyManagers(), trustManager.getTrustManagers(),
+			ssl.init(serverKeyManager.getKeyManagers(), null,
 					SecureRandom.getInstance("SHA1PRNG"));
 			serverSock = (SSLServerSocket)ssl.getServerSocketFactory().createServerSocket(PORT);
-			serverSock.setNeedClientAuth(true);
+			serverSock.setNeedClientAuth(false);
 //			socket = (SSLSocket)serverSock.accept();
 			//send data
 //			out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())));

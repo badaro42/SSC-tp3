@@ -34,8 +34,6 @@ class ProxyClient {
     private int destPort;
     private SSLSocket sslsocket;
 
-    private byte[] dfKey;
-
 
     MessageDigest md;
 //    Set<byte[]> noncesControl;
@@ -170,8 +168,8 @@ class ProxyClient {
     private static final String SSL_CONTEXT_PROVIDER = "TLS";
     private static final String SECURE_RANDOM_ALGORITHM = "SHA1PRNG";
 
-    private static final String SERVER_KEYSTORE_NAME = "serverkeystore";
-    private static final String CLIENT_KEYSTORE_NAME = "pckeystore";
+    private static final String CLIENT_TRUST_STORE = "clienttruststore";
+//    private static final String CLIENT_KEYSTORE_NAME = "clientks";
     private static final String GENERAL_PASSWORD = "password";
 //    private static final String CLIENT_CERTIFICATE_FILENAME = "clientCert";  //TODO alterar estes nomes
 //    private static final String SERVER_CERTIFICATE_PASSWORD = "password";
@@ -187,20 +185,20 @@ class ProxyClient {
     private void createSSLSocket() {
 
         try {
-            ks = KeyStore.getInstance(KEYSTORE_PROVIDER);
-            input = new FileInputStream(CLIENT_KEYSTORE_NAME);
-            ks.load(input, GENERAL_PASSWORD.toCharArray());
-            clientKM = KeyManagerFactory.getInstance(KEY_MANAGER_FACTORY_PROVIDER);
-            clientKM.init(ks, GENERAL_PASSWORD.toCharArray());
+//            ks = KeyStore.getInstance(KEYSTORE_PROVIDER);
+//            input = new FileInputStream(CLIENT_KEYSTORE_NAME);
+//            ks.load(input, GENERAL_PASSWORD.toCharArray());
+//            clientKM = KeyManagerFactory.getInstance(KEY_MANAGER_FACTORY_PROVIDER);
+//            clientKM.init(ks, GENERAL_PASSWORD.toCharArray());
 
             ks = KeyStore.getInstance(KEYSTORE_PROVIDER);
-            input = new FileInputStream(SERVER_KEYSTORE_NAME);
+            input = new FileInputStream(CLIENT_TRUST_STORE);
             ks.load(input, GENERAL_PASSWORD.toCharArray());
             serverTrustManager = TrustManagerFactory.getInstance(KEY_MANAGER_FACTORY_PROVIDER);
             serverTrustManager.init(ks);
 
             SSLContext ssl = SSLContext.getInstance(SSL_CONTEXT_PROVIDER);
-            ssl.init(clientKM.getKeyManagers(), serverTrustManager.getTrustManagers(),
+            ssl.init(null, serverTrustManager.getTrustManagers(),
                     SecureRandom.getInstance(SECURE_RANDOM_ALGORITHM));
             sslsocket = (SSLSocket) ssl.getSocketFactory().createSocket(AUTH_SERVER, AUTH_SERVER_PORT);
             sslsocket.startHandshake();
