@@ -5,15 +5,15 @@ import java.math.BigInteger;
 import java.net.*;
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
+import sun.security.x509.X500Name;
+import java.util.Date;
 import java.util.Scanner;
-
 import javax.crypto.*;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSocket;
-import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.*;
+import javax.security.cert.CertificateNotYetValidException;
+import javax.security.cert.X509Certificate;
 
 class ProxyClient {
 
@@ -34,16 +34,16 @@ class ProxyClient {
     private int destPort;
     private SSLSocket sslsocket;
 
-
     MessageDigest md;
 //    Set<byte[]> noncesControl;
-
 
     private ProxyClient(String user, String password) throws NoSuchAlgorithmException,
             NoSuchProviderException, NoSuchPaddingException, IOException,
             InvalidKeyException, InvalidAlgorithmParameterException, InvalidKeySpecException, Exception {
 
         createSSLSocket();
+
+        verifyCertificates();
 
 //        noncesControl = new HashSet<byte[]>();
         md = MessageDigest.getInstance("SHA-1");
@@ -69,9 +69,6 @@ class ProxyClient {
         //rs.close();
     }
 
-
-
-
 //    public static byte[] stringToBytes(String s) {
 //        byte[] b2 = new BigInteger(s, 36).toByteArray();
 //        return Arrays.copyOfRange(b2, 1, b2.length);
@@ -96,7 +93,6 @@ class ProxyClient {
             System.err.println("INTEGRIDADA COMPROMETIDA");
             return -1;
         }
-
         return mHash.length;
     }
 
@@ -115,12 +111,10 @@ class ProxyClient {
         } catch (Exception e) {
             // e.printStackTrace();
         }
-
         return null;
     }
 
     public void run() {
-
         //		authenticate();
 
         byte[] buffer = new byte[65536];
@@ -130,16 +124,13 @@ class ProxyClient {
         DatagramPacket p = new DatagramPacket(buffer, buffer.length);
 
         while (true) {
-
             try {
                 rs.receive(p);
             } catch (IOException e) {
                 // e.printStackTrace();
             }
 
-
             plainData = decipher(p.getData());
-
 
             //if integrity is not secured, we don't want this packet
             hashLength = verifyHash(plainData);
@@ -169,7 +160,7 @@ class ProxyClient {
     private static final String SECURE_RANDOM_ALGORITHM = "SHA1PRNG";
 
     private static final String CLIENT_TRUST_STORE = "clienttruststore";
-//    private static final String CLIENT_KEYSTORE_NAME = "clientks";
+    //    private static final String CLIENT_KEYSTORE_NAME = "clientks";
     private static final String GENERAL_PASSWORD = "password";
 //    private static final String CLIENT_CERTIFICATE_FILENAME = "clientCert";  //TODO alterar estes nomes
 //    private static final String SERVER_CERTIFICATE_PASSWORD = "password";
@@ -183,7 +174,6 @@ class ProxyClient {
 
     //usa as chaves do cliente e servidor para criar um canal seguro
     private void createSSLSocket() {
-
         try {
 //            ks = KeyStore.getInstance(KEYSTORE_PROVIDER);
 //            input = new FileInputStream(CLIENT_KEYSTORE_NAME);
@@ -205,7 +195,31 @@ class ProxyClient {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
 
+    //verifica o certificado do servidor se o CN do host corresponde ao CN do certificado.
+    //verifica tambem se ainda se encontra válido à data da conexao
+    private void verifyCertificates(){
+        try {
+            SSLSession session = sslsocket.getSession();
+            Principal server = session.getPeerPrincipal();
+
+            String[] rawInfo = server.toString().split(", ");
+            String[] cnInfo = rawInfo[0].split("=");
+
+            X509Certificate[] certs = session.getPeerCertificateChain();
+            String domain = certs[0].getSubjectDN().getName();
+            certs[0].checkValidity(new Date());
+            X500Name name = new X500Name(domain);
+
+            if (!cnInfo[1].equals(name.getCommonName()))
+                System.err.println("Aviso! Esperava " + cnInfo[1] + " mas encontrei " + name.getCommonName() + "!!");
+
+        } catch (CertificateNotYetValidException e) {
+            System.err.println("The certificate has expired");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private String[] readAuthAlgorithm(String filename) {
@@ -227,7 +241,6 @@ class ProxyClient {
 
         } catch (FileNotFoundException e) {
             System.err.println("authConfig file not found");
-//			// e.printStackTrace();
             System.exit(0);
         }
         return (new String[3]);
@@ -243,25 +256,22 @@ class ProxyClient {
 
     //TODO
     private void authenticate(String username, String password) throws Exception {
-		sslsocket.startHandshake();
+        sslsocket.startHandshake();
         PrintWriter out;
         BufferedReader in;
 
         try {
-
-			out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(sslsocket.getOutputStream())));
+            out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(sslsocket.getOutputStream())));
             in = new BufferedReader(new InputStreamReader(sslsocket.getInputStream()));
 
-			System.out.println(sslsocket.isConnected());
-
             out.println(username);
-			out.flush();
+            out.flush();
             out.println(password);
-			out.flush();
+            out.flush();
 
             String ciphersuite = in.readLine();
 
-			//TODO usar a ciphersuite
+            //TODO usar a ciphersuite
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -293,7 +303,6 @@ class ProxyClient {
             e.printStackTrace();
         }
     }
-
 
     static public void main(String[] args) throws Exception {
         if (args.length != 2) {
