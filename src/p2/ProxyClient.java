@@ -17,17 +17,14 @@ import javax.security.cert.X509Certificate;
 
 class ProxyClient {
 
-	private static final String AUTH_SERVER = "localhost";
+	private static String AUTH_SERVER = "localhost";
 	private static final int AUTH_SERVER_PORT = 9000;
 
 	private static final byte PROT_VERSION = 0x1;
 	private static final int NONCE_LENGTH = 8;
 
 	private Mac hMac;
-	private Key hMacKey;
 	private Cipher cipher;
-	private SecretKeySpec key;
-	private IvParameterSpec ivSpec;
 	private MulticastSocket rs;
 	private DatagramSocket socket;
 	private InetAddress dest;
@@ -39,7 +36,6 @@ class ProxyClient {
 	private int streamcastPort;
 
 	MessageDigest md;
-//    Set<byte[]> noncesControl;
 
 	private ProxyClient(String user, String password) throws NoSuchAlgorithmException,
 			NoSuchProviderException, NoSuchPaddingException, IOException,
@@ -167,29 +163,22 @@ class ProxyClient {
 	private static final String CLIENT_TRUST_STORE = "clienttruststore";
 	    private static final String CLIENT_KEYSTORE_NAME = "clientks";
 	private static final String GENERAL_PASSWORD = "password";
-//    private static final String CLIENT_CERTIFICATE_FILENAME = "clientCert";  //TODO alterar estes nomes
-//    private static final String SERVER_CERTIFICATE_PASSWORD = "password";
-//    private static final String SERVER_CERTIFICATE_FILENAME = "authServerCert"; //TODO alterar estes nomes
-
-	private KeyManagerFactory clientKM = null;
-	private TrustManagerFactory serverTrustManager = null;
 
 	FileInputStream input = null;
-	private KeyStore ks = null;
 
 	//usa as chaves do cliente e servidor para criar um canal seguro
 	private void createSSLSocket() {
 		try {
-            ks = KeyStore.getInstance(KEYSTORE_PROVIDER);
+			KeyStore ks = KeyStore.getInstance(KEYSTORE_PROVIDER);
             input = new FileInputStream(CLIENT_KEYSTORE_NAME);
             ks.load(input, GENERAL_PASSWORD.toCharArray());
-            clientKM = KeyManagerFactory.getInstance(KEY_MANAGER_FACTORY_PROVIDER);
+			KeyManagerFactory clientKM = KeyManagerFactory.getInstance(KEY_MANAGER_FACTORY_PROVIDER);
             clientKM.init(ks, GENERAL_PASSWORD.toCharArray());
 
 			ks = KeyStore.getInstance(KEYSTORE_PROVIDER);
 			input = new FileInputStream(CLIENT_TRUST_STORE);
 			ks.load(input, GENERAL_PASSWORD.toCharArray());
-			serverTrustManager = TrustManagerFactory.getInstance(KEY_MANAGER_FACTORY_PROVIDER);
+			TrustManagerFactory serverTrustManager = TrustManagerFactory.getInstance(KEY_MANAGER_FACTORY_PROVIDER);
 			serverTrustManager.init(ks);
 
 			SSLContext ssl = SSLContext.getInstance(SSL_CONTEXT_PROVIDER);
@@ -271,23 +260,15 @@ class ProxyClient {
 		streamcastAddress = elems[i++];
 		streamcastPort = Integer.parseInt(elems[i++]);
 
-//		cipherType = "AES";
-//		cipherName = "AES/CFB/PKCS5Padding";
-//		hmacType = "HMacSHA1";
-//		keyBytes = "1n046wfzbekh0aoqvy8nrlctxifed10a".getBytes();//stringToBytes(confs[3]);
-//		ivBytes = "f5m8sj9c7lwq5tk5".getBytes();//stringToBytes(confs[4]);
-//		hmacBytes = "6dpab5i0jo2ixz3lcb4sht3i073uf8qmn7yv6yma264gzq8wtb".getBytes();//stringToBytes(confs[5]);
-
-
 		try {
-			key = new SecretKeySpec(keyBytes, cipherType);
-			hMacKey = new SecretKeySpec(hmacBytes, hmacType);
+			SecretKeySpec key = new SecretKeySpec(keyBytes, cipherType);
+			Key hMacKey = new SecretKeySpec(hmacBytes, hmacType);
 
 			cipher = Cipher.getInstance(cipherMode, provider);
 			hMac = Mac.getInstance(hmacType, provider);
 
 			if (padding){
-				ivSpec = new IvParameterSpec(ivBytes);
+				IvParameterSpec ivSpec = new IvParameterSpec(ivBytes);
 				cipher.init(Cipher.DECRYPT_MODE, key, ivSpec);
 			}
 			else
@@ -300,9 +281,10 @@ class ProxyClient {
 	}
 
 	static public void main(String[] args) throws Exception {
-		if (args.length != 2) {
-			System.out.println("Use: p1.ProxyClient user password");
+		if (args.length != 3) {
+			System.out.println("Use: p1.ProxyClient user password authserverAddress");
 		}
+		AUTH_SERVER = args[3];
 
 		System.out.println("Authenticating...");
 		ProxyClient pc = new ProxyClient(args[0], args[1]);

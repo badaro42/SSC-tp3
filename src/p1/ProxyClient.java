@@ -17,17 +17,14 @@ import javax.security.cert.X509Certificate;
 
 class ProxyClient {
 
-	private static final String AUTH_SERVER = "localhost";
+	private static String AUTH_SERVER = "localhost";
 	private static final int AUTH_SERVER_PORT = 9000;
 
 	private static final byte PROT_VERSION = 0x1;
 	private static final int NONCE_LENGTH = 8;
 
 	private Mac hMac;
-	private Key hMacKey;
 	private Cipher cipher;
-	private SecretKeySpec key;
-	private IvParameterSpec ivSpec;
 	private MulticastSocket rs;
 	private DatagramSocket socket;
 	private InetAddress dest;
@@ -280,14 +277,14 @@ class ProxyClient {
 		streamcastPort = Integer.parseInt(elems[i++]);
 
 		try {
-			key = new SecretKeySpec(keyBytes, cipherType);
-			hMacKey = new SecretKeySpec(hmacBytes, hmacType);
+			SecretKeySpec key = new SecretKeySpec(keyBytes, cipherType);
+			Key hMacKey = new SecretKeySpec(hmacBytes, hmacType);
 
 			cipher = Cipher.getInstance(cipherMode, provider);
 			hMac = Mac.getInstance(hmacType, provider);
 
 			if (padding){
-				ivSpec = new IvParameterSpec(ivBytes);
+				IvParameterSpec ivSpec = new IvParameterSpec(ivBytes);
 				cipher.init(Cipher.DECRYPT_MODE, key, ivSpec);
 			}
 			else
@@ -301,9 +298,10 @@ class ProxyClient {
 	}
 
 	static public void main(String[] args) throws Exception {
-		if (args.length != 2) {
-			System.out.println("Use: p1.ProxyClient user password");
+		if (args.length != 3) {
+			System.out.println("Use: p1.ProxyClient user password authserverAddress");
 		}
+		AUTH_SERVER = args[3];
 
 		System.out.println("Authenticating...");
 		ProxyClient pc = new ProxyClient(args[0], args[1]);
