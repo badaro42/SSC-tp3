@@ -18,11 +18,7 @@ public class AuthServer3 {
 
 	private Map<String, String> users;
 
-	private byte[] cipherSuiteWithKeysBytes;
 	private String cipherSuiteWithKeys;
-
-	private int sessionID = 1; //TODO
-
 
 	private static final String KEYSTORE_PROVIDER = "JKS";
 	private static final String SERVER_CERTIFICATE_PASSWORD = "password";
@@ -73,7 +69,6 @@ public class AuthServer3 {
 			cipherSuiteWithKeys += "+" + in.next(); //port
 			in.close();
 
-			cipherSuiteWithKeysBytes = cipherSuiteWithKeys.getBytes();
 
 		} catch (FileNotFoundException e) {
 			System.err.println("Config file not found");
@@ -150,6 +145,9 @@ public class AuthServer3 {
 			serverSock = (SSLServerSocket)ssl.getServerSocketFactory().createServerSocket(PORT);
 			serverSock.setNeedClientAuth(false);
 
+//			String[] cs ={"TLS_RSA_WITH_AES_128_CBC_SHA"};
+//			serverSock.setEnabledCipherSuites(cs);
+
 		}
 		catch (Exception e){
 			e.printStackTrace();
@@ -174,7 +172,6 @@ public class AuthServer3 {
 				in = new BufferedReader(new InputStreamReader(this.socket.getInputStream()));
 				out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(this.socket.getOutputStream())));
 
-				System.out.println(this.socket.isConnected());
 
 				String username = in.readLine();
 				String password = in.readLine();
@@ -191,8 +188,6 @@ public class AuthServer3 {
 
 		}
 	}
-
-
 
 
 	public static void main(String[] args) {

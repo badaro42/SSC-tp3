@@ -26,7 +26,6 @@ public class AuthServer3 {
 
 	private Map<String, String> users;
 
-	private byte[] cipherSuiteWithKeysBytes;
 	private String cipherSuiteWithKeys;
 
 	private int sessionID = 1; //TODO
@@ -83,7 +82,7 @@ public class AuthServer3 {
 			in.close();
 
 
-			cipherSuiteWithKeysBytes = cipherSuiteWithKeys.getBytes();
+//			cipherSuiteWithKeysBytes = cipherSuiteWithKeys.getBytes();
 
 		} catch (FileNotFoundException e) {
 			System.err.println("Config file not found");
@@ -167,28 +166,15 @@ public class AuthServer3 {
 					SecureRandom.getInstance("SHA1PRNG"));
 			serverSock = (SSLServerSocket)ssl.getServerSocketFactory().createServerSocket(PORT);
 			serverSock.setNeedClientAuth(true);
-//			socket = (SSLSocket)serverSock.accept();
-			//send data
-//			out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())));
-//			out.println("Resposta do servidor ....");
-//			out.flush();
+
+//			String[] cs ={"TLS_RSA_WITH_AES_128_CBC_SHA"};
+//			serverSock.setEnabledCipherSuites(cs);
+
 		}
 		catch (Exception e){
 			e.printStackTrace();
 		}
-//		finally{
-//
-//			if(out!=null) out.close();
-//			try{
-//
-//				if(serverSock!=null) serverSock.close();
-////				if(socket!=null) socket.close();
-//			}
-//			catch (IOException e){
-//
-//				e.printStackTrace();
-//			}
-//		}
+
 	}
 
 

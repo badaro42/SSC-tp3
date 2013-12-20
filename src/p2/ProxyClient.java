@@ -157,7 +157,7 @@ class ProxyClient {
 
 	private static final String KEYSTORE_PROVIDER = "JKS";
 	private static final String KEY_MANAGER_FACTORY_PROVIDER = "SunX509";
-	private static final String SSL_CONTEXT_PROVIDER = "TLS";
+	private static final String SSL_CONTEXT_PROVIDER = "SSL";
 	private static final String SECURE_RANDOM_ALGORITHM = "SHA1PRNG";
 
 	private static final String CLIENT_TRUST_STORE = "clienttruststore";
@@ -185,6 +185,7 @@ class ProxyClient {
 			ssl.init(clientKM.getKeyManagers(), serverTrustManager.getTrustManagers(),
 					SecureRandom.getInstance(SECURE_RANDOM_ALGORITHM));
 			sslsocket = (SSLSocket) ssl.getSocketFactory().createSocket(AUTH_SERVER, AUTH_SERVER_PORT);
+
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -218,6 +219,8 @@ class ProxyClient {
 
 
 	private void authenticate(String username, String password) throws Exception {
+
+		long time1 = System.nanoTime();
 		sslsocket.startHandshake();
 		PrintWriter out;
 		BufferedReader in;
@@ -232,6 +235,9 @@ class ProxyClient {
 			out.flush();
 
 			String ciphersuite = in.readLine();
+
+			long time2 = System.nanoTime();
+			System.out.println(time2 - time1);
 
 			initCipherSuite(ciphersuite);
 		} catch (IOException e) {
@@ -250,15 +256,14 @@ class ProxyClient {
 		String hmacType = elems[1];
 		byte[] keyBytes = elems[2].getBytes();//"1n046wfzbekh0aoqvy8nrlctxifed10as9yxav" );
 		byte[] hmacBytes = elems[3].getBytes(); //"f5m8sj9c7lwq5tk5y7ti6ikgn" );
-		int i = 4;
 		byte[] ivBytes = null;
 		if (padding)
-			ivBytes = elems[i++].getBytes(); //"6dpab5i0jo2ixz3lcb4sht3i073uf8qmn7yv6yma264gzq8wtb" );
+			ivBytes = elems[4].getBytes(); //"6dpab5i0jo2ixz3lcb4sht3i073uf8qmn7yv6yma264gzq8wtb" );
 
 		String provider = "BC";
 
-		streamcastAddress = elems[i++];
-		streamcastPort = Integer.parseInt(elems[i++]);
+		streamcastAddress = elems[5];
+		streamcastPort = Integer.parseInt( elems[6] );
 
 		try {
 			SecretKeySpec key = new SecretKeySpec(keyBytes, cipherType);
@@ -284,7 +289,7 @@ class ProxyClient {
 		if (args.length != 3) {
 			System.out.println("Use: p1.ProxyClient user password authserverAddress");
 		}
-		AUTH_SERVER = args[3];
+		AUTH_SERVER = args[2];
 
 		System.out.println("Authenticating...");
 		ProxyClient pc = new ProxyClient(args[0], args[1]);

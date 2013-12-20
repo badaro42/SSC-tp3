@@ -38,18 +38,16 @@ class ProxyClient {
 	MessageDigest md;
 //    Set<byte[]> noncesControl;
 
-	private ProxyClient(String user, String password) throws NoSuchAlgorithmException,
-			NoSuchProviderException, NoSuchPaddingException, IOException,
-			InvalidKeyException, InvalidAlgorithmParameterException, InvalidKeySpecException, Exception {
+	private ProxyClient(String user, String password) throws Exception {
 
 		createSSLSocket();
 
 		verifyCertificates();
 
-//        noncesControl = new HashSet<byte[]>();
 		md = MessageDigest.getInstance("SHA-1");
 
 		socket = new DatagramSocket();
+
 
 		authenticate(user, password);
 
@@ -151,40 +149,24 @@ class ProxyClient {
 		}
 	}
 
-	//certificado
-	//TODO gerar certificados para o cliente e servidor
-
 	private static final String KEYSTORE_PROVIDER = "JKS";
 	private static final String KEY_MANAGER_FACTORY_PROVIDER = "SunX509";
-	private static final String SSL_CONTEXT_PROVIDER = "TLS";
+	private static final String SSL_CONTEXT_PROVIDER = "SSL";
 	private static final String SECURE_RANDOM_ALGORITHM = "SHA1PRNG";
 
 	private static final String CLIENT_TRUST_STORE = "clienttruststore";
-	//    private static final String CLIENT_KEYSTORE_NAME = "clientks";
 	private static final String GENERAL_PASSWORD = "password";
-//    private static final String CLIENT_CERTIFICATE_FILENAME = "clientCert";  //TODO alterar estes nomes
-//    private static final String SERVER_CERTIFICATE_PASSWORD = "password";
-//    private static final String SERVER_CERTIFICATE_FILENAME = "authServerCert"; //TODO alterar estes nomes
-
-	private KeyManagerFactory clientKM = null;
-	private TrustManagerFactory serverTrustManager = null;
 
 	FileInputStream input = null;
-	private KeyStore ks = null;
 
 	//usa as chaves do cliente e servidor para criar um canal seguro
 	private void createSSLSocket() {
 		try {
-//            ks = KeyStore.getInstance(KEYSTORE_PROVIDER);
-//            input = new FileInputStream(CLIENT_KEYSTORE_NAME);
-//            ks.load(input, GENERAL_PASSWORD.toCharArray());
-//            clientKM = KeyManagerFactory.getInstance(KEY_MANAGER_FACTORY_PROVIDER);
-//            clientKM.init(ks, GENERAL_PASSWORD.toCharArray());
 
-			ks = KeyStore.getInstance(KEYSTORE_PROVIDER);
+			KeyStore ks = KeyStore.getInstance(KEYSTORE_PROVIDER);
 			input = new FileInputStream(CLIENT_TRUST_STORE);
 			ks.load(input, GENERAL_PASSWORD.toCharArray());
-			serverTrustManager = TrustManagerFactory.getInstance(KEY_MANAGER_FACTORY_PROVIDER);
+			TrustManagerFactory serverTrustManager = TrustManagerFactory.getInstance(KEY_MANAGER_FACTORY_PROVIDER);
 			serverTrustManager.init(ks);
 
 			SSLContext ssl = SSLContext.getInstance(SSL_CONTEXT_PROVIDER);
@@ -232,6 +214,7 @@ class ProxyClient {
 
 	//TODO
 	private void authenticate(String username, String password) throws Exception {
+		long time1 = System.nanoTime();
 		sslsocket.startHandshake();
 		PrintWriter out;
 		BufferedReader in;
@@ -247,6 +230,9 @@ class ProxyClient {
 
 			String ciphersuite = in.readLine();
 
+			long time2 = System.nanoTime();
+			System.out.println(time2 - time1);
+
 			initCipherSuite(ciphersuite);
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -254,9 +240,6 @@ class ProxyClient {
 	}
 
 	private void initCipherSuite(String config) {
-
-
-		System.out.println(config);
 
 		String[] elems = config.split("\\+");
 
@@ -268,13 +251,12 @@ class ProxyClient {
 		byte[] keyBytes = elems[2].getBytes();//"1n046wfzbekh0aoqvy8nrlctxifed10as9yxav" );
 		byte[] hmacBytes = elems[3].getBytes(); //"f5m8sj9c7lwq5tk5y7ti6ikgn" );
 		byte[] ivBytes = null;
-		int i = 4;
 		if (padding)
-			ivBytes = elems[i++].getBytes(); //"6dpab5i0jo2ixz3lcb4sht3i073uf8qmn7yv6yma264gzq8wtb" );
+			ivBytes = elems[4].getBytes(); //"6dpab5i0jo2ixz3lcb4sht3i073uf8qmn7yv6yma264gzq8wtb" );
 		String provider = "BC";
 
-		streamcastAddress = elems[i++];
-		streamcastPort = Integer.parseInt(elems[i++]);
+		streamcastAddress = elems[5];
+		streamcastPort = Integer.parseInt(elems[6]);
 
 		try {
 			SecretKeySpec key = new SecretKeySpec(keyBytes, cipherType);
@@ -301,7 +283,7 @@ class ProxyClient {
 		if (args.length != 3) {
 			System.out.println("Use: p1.ProxyClient user password authserverAddress");
 		}
-		AUTH_SERVER = args[3];
+		AUTH_SERVER = args[2];
 
 		System.out.println("Authenticating...");
 		ProxyClient pc = new ProxyClient(args[0], args[1]);
